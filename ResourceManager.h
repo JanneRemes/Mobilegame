@@ -10,8 +10,9 @@ public:
 
 	class Impl;
 	static Impl* _impl;
-	static void Initialize();
-	static void readFile(const char* pathToFile, android_app* application, std::string& out);
+	static void Initialize(android_app* app);
+	static void readFile(const char* pathToFile, std::string& out);
+	static android_app* application;
 private:
 };
 

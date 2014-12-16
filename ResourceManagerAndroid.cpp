@@ -2,11 +2,12 @@
 #include <android/log.h>
 #include <vector>
 #define LOG(...) __android_log_print(ANDROID_LOG_INFO, "NativeSample", __VA_ARGS__);
+android_app* ResourceManager::application;
 class ResourceManager::Impl
 {
 	
 public:
-	void readFile(const char* pathToFile, android_app* application, std::string& out)
+	void readFile(const char* pathToFile, std::string& out)
 	{
 	AAssetManager* assetManager = application->activity->assetManager;
 	AAsset* asset = AAssetManager_open(assetManager, pathToFile, AASSET_MODE_UNKNOWN);
@@ -23,12 +24,15 @@ public:
 };
 ResourceManager::Impl* ResourceManager::_impl;
 //static bool initialized = false;
-void ResourceManager::Initialize()
+void ResourceManager::Initialize(android_app* app)
 {
+LOG("HERE");
 	_impl = new Impl();
+	ResourceManager::application = app;
+	LOG("HERE ASWELL");
 	//initialized = true;
 }
-void ResourceManager::readFile(const char* pathToFile, android_app* application, std::string& out)
+void ResourceManager::readFile(const char* pathToFile, std::string& out)
 {
-	_impl->readFile(pathToFile,application,out);
+	_impl->readFile(pathToFile,out);
 }

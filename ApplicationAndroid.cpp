@@ -7,16 +7,28 @@
 #include <GLES/gl.h>
 #include <assert.h>
 #include "ResourceManager.h"
+static bool graphicInitialized;
 class Application::Impl
 {
 
 public:
+		//from previos
 
-	//struct data{
+
+
+
 		EGLDisplay display;
 		EGLSurface surface;
 		EGLContext context;
-	//};
+			bool isRunning = true;
+		
+		Impl(){ graphicInitialized= false; };
+			android_app* application;
+	android_poll_source* eventSource;
+		~Impl()
+	{
+		destroyGraphicsContext(application);
+	}
 	void Initialize(android_app* application)
 	{
 
@@ -27,8 +39,7 @@ public:
 		isRunning = true;
 
 	}
-	android_app* application;
-	android_poll_source* eventSource;
+
 	static void Log(const char *format, va_list arg)
 	{
 		__android_log_vprint(ANDROID_LOG_INFO, "NativeSample",
@@ -43,7 +54,7 @@ public:
 		Log(format, arg);
 		va_end(arg);
 	}
-	bool isRunning;
+
 	void Update()
 	{
 		//Log("%s", "Test1");
@@ -67,7 +78,7 @@ public:
 	}
 	
 	
-	Impl(){  };
+
 	static void processCommand(android_app* application, int command)
 	{
 		switch (command)
@@ -107,14 +118,12 @@ public:
 
 			int width = ANativeWindow_getWidth(application->window);
 			int height = ANativeWindow_getHeight(application->window);
-			//float l = (rand() % 50) / 50.0f;
-			//float u = (rand() % 50) / 50.0f;
-			//	float o = (rand() % 50) / 50.0f;
-			//LOG("%f",l);
+			if(graphicInitialized)
+			{
 			glClearColor(x / width, y / height, (x + y) / (width + height), 1.0f);
-			//int height = app->window->height;
 			glClear(GL_COLOR_BUFFER_BIT);
 			eglSwapBuffers(tempData->display, tempData->surface);
+			}
 		}
 			return 1;
 		default:
@@ -123,6 +132,9 @@ public:
 
 		return 0;
 	}
+
+
+	
 	static void createGraphicsContext(android_app* application)
 	{
 		bool paskafix;
@@ -170,11 +182,12 @@ public:
 		Log("%s", "Testing createContext1", paskafix);
 		eglSwapBuffers(tempData->display, tempData->surface);
 		Log("%s", "Testing createContext2", paskafix);
-
+		graphicInitialized = true;
+		LoadShaders();
 	}
-	~Impl()
+		static void LoadShaders()
 	{
-		destroyGraphicsContext(application);
+		//ResourceMan
 	}
 	static void destroyGraphicsContext(android_app* application)
 	{
@@ -211,9 +224,9 @@ Application::~Application()
 void android_main(android_app* application)
 {
 	Application a;
-	ResourceManager::Initialize();
+	ResourceManager::Initialize(application);
 	std::string stringtest;
-	ResourceManager::readFile("hello.txt",application, stringtest);
+	ResourceManager::readFile("hello.txt", stringtest);
 	a.Log("%s",stringtest.data());
 	a._impl->Initialize(application);
 	while (true)
