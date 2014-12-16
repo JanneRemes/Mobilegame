@@ -4,19 +4,91 @@
 #include <android_native_app_glue.h>
 #include <android/input.h>
 #include <EGL/egl.h>
-#include <GLES/gl.h>
+#include <GLES2/gl2.h>
 #include <assert.h>
 #include "ResourceManager.h"
+#define GLM_FORCE_RADIANS
+#include "glm\glm.hpp"
+#include "glm\gtc\matrix_transform.hpp"
+#include "glm\gtx\transform.hpp"
+#include <vector>
 static bool graphicInitialized;
+		static GLuint _program;
 class Application::Impl
 {
 
 public:
 		//from previos
+		GLuint _texture;
+		GLint _positionIndex;
+		GLint _colorIndex;
+		GLint _textureIndex;
+
+		GLuint buffers[2];
+		glm::mat4 worldTransform;
+		GLint worldIndex;
+		float rotation = 0.1f;
+		GLint alphaIndex;
+	std::vector<GLfloat> _vertexBufferInput = 
+{
+		//vasen ala
+		-0.5f, 0.0f, -0.5f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, -1.0f,
 
 
+		//oikea ala
+		0.5f, 0.0f, -0.5f,
+		1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f,
 
+		//oikea ylä
+		0.5f, 0.0f, 0.5f,
+		0.0f, 0.0f, 1.0f,
+		1.0f, 0.0f,
+		//vasen ylä
+		-0.5f, 0.0f, 0.5f,
+		0.0f, 0.0f, 0.0f,
+		1.0f, -1.0f,
 
+		//vasen ala
+		-0.5f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f,
+		-0.5f, 0.0f,
+
+		//vasen ylä
+		-0.5f, 1.0f, 0.0f,
+		1.0f, 0.0f, 1.0f,
+		-0.5f, 1.0f,
+		//oikea ylä
+		0.5f, 1.0f, 0.0f,
+		1.0f, 0.0f, 1.0f,
+		0.5f, 1.0f,
+
+		//oikea ala
+		0.5f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f,
+		0.5f, 0.0f
+	};
+	std::vector<GLuint> _indexBufferInput = {
+		0u, 1u, 2u,
+		2u, 3u, 0u,
+		4u, 5u, 6u,
+		6u, 7u, 4u
+		/*0u, 1u, 4u,
+		1u, 2u, 4u,
+		2u,3u,4u,
+		3u,0u,4u*/
+
+	};
+	//end of previous
+		//from rendering context
+
+	GLuint vertexShader;
+	GLuint fragmentShader;
+	
+	
+	
 		EGLDisplay display;
 		EGLSurface surface;
 		EGLContext context;
@@ -188,6 +260,26 @@ public:
 		static void LoadShaders()
 	{
 		//ResourceMan
+		_program = glCreateProgram();
+			Log("Program created, value: %d",_program);
+		std::string vertexSource;
+		std::string fragmentSource;
+		ResourceManager::readFile("vertexSource.txt", vertexSource);
+		ResourceManager::readFile("fragmentSource.txt", fragmentSource);
+		//Log("[VERTEX]%s",vertexSource.data());
+		//Log("[FRAGMENT]%s",fragmentSource.data());
+		const GLchar *testvertex = (GLchar*)vertexSource.data();
+		GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(vertexShader, 1, &testvertex, nullptr);
+		glCompileShader(vertexShader);
+
+		GLint compileResult;
+		glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileResult);
+		Log("[VERTEXCOMPILE]%d", compileResult == GL_TRUE);
+
+		glAttachShader(_program, vertexShader);
+			
+	
 	}
 	static void destroyGraphicsContext(android_app* application)
 	{

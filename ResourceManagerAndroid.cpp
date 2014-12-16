@@ -16,7 +16,7 @@ public:
 	LOG("[DEBUG] AssetLength = %d", length);
 	std::vector<char> buffer(length, 0);
 		
-	AAsset_read(asset, buffer.data(), buffer.size() - 1);
+	AAsset_read(asset, buffer.data(), buffer.size());
 	AAsset_close(asset);
 
 	out.assign(buffer.begin(), buffer.end());
