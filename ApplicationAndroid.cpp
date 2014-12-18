@@ -22,11 +22,12 @@ static GLint _textureIndex;
 static GLuint buffers[2];
 static glm::mat4 worldTransform;
 static GLint worldIndex;
-static float rotation = 0.1f;
+static float rotation = 90.0f;
 static GLint alphaIndex;
 static GLint viewIndex;
 static Object3D *l;
 static Object3D *l2;
+static Object3D *pallo;
 static std::vector<GLfloat> _vertexBufferInput = 
 {
 		//vasen ala
@@ -79,7 +80,6 @@ static std::vector<GLfloat> _vertexBufferInput =
 		3u,0u,4u*/
 
 	};
-	static float test = 0.01f;
 		static bool speeding = true;
 class Application::Impl
 {
@@ -124,7 +124,10 @@ public:
 	}
 	static void DrawObject(Object3D *objectPointer)
 	{
-
+	
+	worldTransform = glm::translate(glm::vec3(objectPointer->x/10.0f, objectPointer->y/ 10.0f, 0.0f)) *glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 0.0f, 1.0f))*glm::scale(glm::vec3(1.0f, -1.0f, 1.0f));
+	glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
+	
 	glBindTexture(GL_TEXTURE_2D, objectPointer->getTextureID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
@@ -172,30 +175,18 @@ public:
 			//Log("%s", "Test5");
 		
 	}
+
 		//glStencilFunc(GL_GEQUAL, 1, 255);
 		//glScissor(100, 100, 600, 400);
 		if(!graphicInitialized)
 		return;
+			pallo->Update(l->y);
 		glUseProgram(_program);
-		if (test < 1 && speeding)
-			test += 0.01f;
-		else if( speeding)
-		{
-			speeding = false;
-			test -= 0.01f;
-		}
-		else
-		{
-			test -= 0.001f;
-			if (test < -1)
-				speeding = true;
-		}
-		glm::mat4 worldTransform = /*glm::translate(glm::vec3(0.0f + test, 0.0f, 0.0f)) * */glm::rotate(rotation, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::vec3(1,1, 1));
+		glm::mat4 worldTransform = /*glm::translate(glm::vec3(0.0f + test, 0.0f, 0.0f)) * */glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 0.0f, 1.0f)) * glm::scale(glm::vec3(1,1, 1));
 		glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
-		glm::mat4 viewTransform = glm::translate(glm::vec3(0.0f+test, -0.5f, -100.0f));
+		glm::mat4 viewTransform = glm::translate(glm::vec3(0.0f, -0.5f, -100.0f));
 		glUniformMatrix4fv(viewIndex, 1, GL_FALSE, reinterpret_cast<float*>(&viewTransform));
 
-		rotation += 0.1f;
 
 
 		glUseProgram(0u);
@@ -222,7 +213,9 @@ public:
 		glUniform1f(alphaIndex, 1.0f);
 	DrawObject(l2);
 	DrawObject(l);
+	DrawObject(pallo);
 	//END OF OBJ
+	/*
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * _vertexBufferInput.size(), &_vertexBufferInput.at(0), GL_STATIC_DRAW);//sizeof(_vertexBufferInput) might return a value that is not always correct...
@@ -243,7 +236,7 @@ public:
 	//glBindTexture(rendContext.getProgramIndex(), _texture);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//Lattia
-	worldTransform = glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 1.0f, 0.0f))*glm::scale(glm::vec3(1.0f, 1.0f, 1.0f));
+	worldTransform = glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 0.0f, 1.0f))*glm::scale(glm::vec3(1.0f, 1.0f, 1.0f));
 	glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
 	glUniform1f(alphaIndex, 1.0f);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(0));
@@ -256,7 +249,7 @@ public:
 	glStencilFunc(GL_EQUAL, 1, 0xFF);
 	glStencilMask(0x00);
 	glDepthMask(GL_TRUE);
-	worldTransform = glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 1.0f, 0.0f))*glm::scale(glm::vec3(1.0f, -1.0f, 1.0f));
+	worldTransform = glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 0.0f, 1.0f))*glm::scale(glm::vec3(1.0f, -1.0f, 1.0f));
 	glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
 	//seinä reflection
 
@@ -266,6 +259,7 @@ public:
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisable(GL_STENCIL_TEST);
+	*/
 	glUseProgram(0);
 	
 	Impl *tempData = static_cast<Impl*>(application->userData);
@@ -310,7 +304,8 @@ public:
 			float x = AMotionEvent_getX(inputEvent, 0);
 			float y = AMotionEvent_getY(inputEvent, 0);
 			Log("[INPUT] TOUCH @ %f, %f", x, y);
-
+			l->y = -y + 350;
+			l2->y = -y + 350;
 			int width = ANativeWindow_getWidth(application->window);
 			int height = ANativeWindow_getHeight(application->window);
 			if(graphicInitialized)
@@ -380,7 +375,12 @@ public:
 		graphicInitialized = true;
 		LoadShaders(application);
 			l = new Object3D(application,"box1.obj","box1.png");
-	l2 = new Object3D(application, "box2.obj","box2.png");
+			l->x = -400.0f;
+	l2 = new Object3D(application, "box1.obj","box1.png");
+	l2->x = 200.0f;
+	pallo = new Object3D(application,"box2.obj","box2.png");
+	pallo->x = -100.0f;
+	pallo->y = 0.0f;
 	}
 		static void LoadShaders(android_app* application)
 	{

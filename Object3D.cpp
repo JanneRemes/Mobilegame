@@ -1,6 +1,10 @@
 #include "Object3D.h"
+#include <stdio.h>      /* printf, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>   
 Object3D::Object3D(android_app *application, const char *objectFileName, const char *imageFileName)
 {
+y = 0.0f;
 this->application = application;
 this->fileName = fileName;
 object = ObjectLoader(application);
@@ -17,8 +21,51 @@ object = ObjectLoader(application);
 	
 	//glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,0);
+	goingRight = false;
+	goingUp = true;
+	yChange = 3.0f;
+	  srand (time(NULL));
+	  gameOver = false;
 }
+	void Object3D::Update(float y)
+	{
+		if(goingUp)
+			y+=yChange;
+		else
+			y-= yChange;
+		if(goingRight)
+			x+=3;
+		else 
+			x-=3;
+			
 
+		if(y < -400)
+		{
+			goingUp = true;
+			yChange = rand() % 5;
+		}
+		else if(y > 400)
+		{
+			goingUp = false;
+			yChange = rand() % 5;
+		}
+					if(gameOver)
+			return;
+		if(x < -280.0f)
+		{
+		if(this->y >y - 260.0f && this->y < y + 260.0f)
+			goingRight = true;
+			else
+			gameOver = true;
+		}
+		else if(x > 100.0f)
+		{
+			if(this->y >y - 260.0f && this->y < y + 260.0f)
+			goingRight = false;
+			else
+			gameOver = true;
+		}
+	}
 Object3D::~Object3D()
 {
 }

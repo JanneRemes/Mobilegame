@@ -11,6 +11,7 @@ public:
 	{
 		return object.getINDEX();
 	}
+	void Update(float y);
 	std::vector<GLfloat> *getFinalVertex()
 	{
 		return object.getFinalVertex();
@@ -19,7 +20,14 @@ public:
 	{
 	return _texture;
 	}
+	float y;
+	float x;
+	bool goingRight;
+	bool goingUp;
+	float yChange;
+	bool gameOver;
 private:
+
 GLuint _texture;
 const char *fileName;
 android_app *application;
