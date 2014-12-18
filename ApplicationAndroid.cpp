@@ -12,24 +12,22 @@
 #include "glm\gtc\matrix_transform.hpp"
 #include "glm\gtx\transform.hpp"
 #include <vector>
+#include "ObjectLoader.h"
+#include "Object3D.h"
 static bool graphicInitialized;
-		static GLuint _program;
-class Application::Impl
-{
-
-public:
-		//from previos
-		GLuint _texture;
-		GLint _positionIndex;
-		GLint _colorIndex;
-		GLint _textureIndex;
-
-		GLuint buffers[2];
-		glm::mat4 worldTransform;
-		GLint worldIndex;
-		float rotation = 0.1f;
-		GLint alphaIndex;
-	std::vector<GLfloat> _vertexBufferInput = 
+static GLuint _program;
+static GLint _positionIndex;
+static GLint _colorIndex;
+static GLint _textureIndex;
+static GLuint buffers[2];
+static glm::mat4 worldTransform;
+static GLint worldIndex;
+static float rotation = 0.1f;
+static GLint alphaIndex;
+static GLint viewIndex;
+static Object3D *l;
+static Object3D *l2;
+static std::vector<GLfloat> _vertexBufferInput = 
 {
 		//vasen ala
 		-0.5f, 0.0f, -0.5f,
@@ -70,7 +68,7 @@ public:
 		1.0f, 0.0f, 1.0f,
 		0.5f, 0.0f
 	};
-	std::vector<GLuint> _indexBufferInput = {
+	static std::vector<GLuint> _indexBufferInput = {
 		0u, 1u, 2u,
 		2u, 3u, 0u,
 		4u, 5u, 6u,
@@ -81,6 +79,19 @@ public:
 		3u,0u,4u*/
 
 	};
+	static float test = 0.01f;
+		static bool speeding = true;
+class Application::Impl
+{
+
+public:
+		//from previos
+
+
+
+
+
+
 	//end of previous
 		//from rendering context
 
@@ -111,7 +122,23 @@ public:
 		isRunning = true;
 
 	}
+	static void DrawObject(Object3D *objectPointer)
+	{
 
+	glBindTexture(GL_TEXTURE_2D, objectPointer->getTextureID());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * ObjectLoader::getVERTEX()->size(), &ObjectLoader::getVERTEX()->at(0), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * objectPointer->getFinalVertex()->size(), &objectPointer->getFinalVertex()->at(0), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0u);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLint) * objectPointer->getINDEX()->size(), &objectPointer->getINDEX()->at(0), GL_STATIC_DRAW);
+	glDrawElements(GL_TRIANGLES, objectPointer->getINDEX()->size(), GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(0));
+
+
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0u);
+	}
 	static void Log(const char *format, va_list arg)
 	{
 		__android_log_vprint(ANDROID_LOG_INFO, "NativeSample",
@@ -145,10 +172,105 @@ public:
 			//Log("%s", "Test5");
 		
 	}
+		//glStencilFunc(GL_GEQUAL, 1, 255);
+		//glScissor(100, 100, 600, 400);
+		if(!graphicInitialized)
+		return;
+		glUseProgram(_program);
+		if (test < 1 && speeding)
+			test += 0.01f;
+		else if( speeding)
+		{
+			speeding = false;
+			test -= 0.01f;
+		}
+		else
+		{
+			test -= 0.001f;
+			if (test < -1)
+				speeding = true;
+		}
+		glm::mat4 worldTransform = /*glm::translate(glm::vec3(0.0f + test, 0.0f, 0.0f)) * */glm::rotate(rotation, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::vec3(1,1, 1));
+		glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
+		glm::mat4 viewTransform = glm::translate(glm::vec3(0.0f+test, -0.5f, -100.0f));
+		glUniformMatrix4fv(viewIndex, 1, GL_FALSE, reinterpret_cast<float*>(&viewTransform));
 
+		rotation += 0.1f;
+
+
+		glUseProgram(0u);
+		Render(application);
 
 	}
+	static void Render(android_app* application)
+	{
+	glFlush();
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	glUseProgram(_program);
 	
+	//OBJ
+	//worldTransform = glm::mat4();
+	/*
+	glBindBuffer(GL_ARRAY_BUFFER, myObjectBuffer);
+	glVertexAttribPointer(_positionIndex, 3, GL_FLOAT, GL_FALSE,12, reinterpret_cast<GLvoid*>(0));
+
+	glDrawElements(GL_TRIANGLES, ObjectLoader::getVERTEX().size(), GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(0));
+	*/
+	//END OF OBJ
+		glUniform1f(alphaIndex, 1.0f);
+	DrawObject(l2);
+	DrawObject(l);
+	//END OF OBJ
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * _vertexBufferInput.size(), &_vertexBufferInput.at(0), GL_STATIC_DRAW);//sizeof(_vertexBufferInput) might return a value that is not always correct...
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * _indexBufferInput.size(), &_indexBufferInput.at(0), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
+
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);//syvyyspuskuri läpi niin korvataan arvot
+	glStencilMask(0xFF);
+	glDepthMask(GL_FALSE);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	//glBindTexture(rendContext.getProgramIndex(), _texture);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//Lattia
+	worldTransform = glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 1.0f, 0.0f))*glm::scale(glm::vec3(1.0f, 1.0f, 1.0f));
+	glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
+	glUniform1f(alphaIndex, 1.0f);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(0));
+
+	//seinä
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(24));
+
+
+	glUniform1f(alphaIndex, -0.5f);
+	glStencilFunc(GL_EQUAL, 1, 0xFF);
+	glStencilMask(0x00);
+	glDepthMask(GL_TRUE);
+	worldTransform = glm::rotate(rotation* 0.0174532925f, glm::vec3(0.0f, 1.0f, 0.0f))*glm::scale(glm::vec3(1.0f, -1.0f, 1.0f));
+	glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
+	//seinä reflection
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(24));
+	//glBindTexture(_program, 0u);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisable(GL_STENCIL_TEST);
+	glUseProgram(0);
+	
+	Impl *tempData = static_cast<Impl*>(application->userData);
+	eglSwapBuffers(tempData->display, tempData->surface);
+	}
 	
 
 	static void processCommand(android_app* application, int command)
@@ -159,11 +281,12 @@ public:
 		case APP_CMD_INIT_WINDOW:
 			createGraphicsContext(application);
 			break;
-			/*
+			
 		case APP_CMD_TERM_WINDOW:
 			destroyGraphicsContext(application);
+			graphicInitialized = false;
 			break;
-			*/
+			
 		case APP_CMD_RESUME:
 			Log("%s","RESUME");
 			break;
@@ -192,9 +315,9 @@ public:
 			int height = ANativeWindow_getHeight(application->window);
 			if(graphicInitialized)
 			{
-			glClearColor(x / width, y / height, (x + y) / (width + height), 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-			eglSwapBuffers(tempData->display, tempData->surface);
+			//glClearColor(x / width, y / height, (x + y) / (width + height), 1.0f);
+			//glClear(GL_COLOR_BUFFER_BIT);
+			//eglSwapBuffers(tempData->display, tempData->surface);
 			}
 		}
 			return 1;
@@ -255,9 +378,11 @@ public:
 		eglSwapBuffers(tempData->display, tempData->surface);
 		Log("%s", "Testing createContext2", paskafix);
 		graphicInitialized = true;
-		LoadShaders();
+		LoadShaders(application);
+			l = new Object3D(application,"box1.obj","box1.png");
+	l2 = new Object3D(application, "box2.obj","box2.png");
 	}
-		static void LoadShaders()
+		static void LoadShaders(android_app* application)
 	{
 		//ResourceMan
 		_program = glCreateProgram();
@@ -268,9 +393,10 @@ public:
 		ResourceManager::readFile("fragmentSource.txt", fragmentSource);
 		//Log("[VERTEX]%s",vertexSource.data());
 		//Log("[FRAGMENT]%s",fragmentSource.data());
-		const GLchar *testvertex = (GLchar*)vertexSource.data();
+		//VERTEX SOURCE
+		const GLchar *vertexFormatted = (GLchar*)vertexSource.data();
 		GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertexShader, 1, &testvertex, nullptr);
+		glShaderSource(vertexShader, 1, &vertexFormatted, nullptr);
 		glCompileShader(vertexShader);
 
 		GLint compileResult;
@@ -278,8 +404,135 @@ public:
 		Log("[VERTEXCOMPILE]%d", compileResult == GL_TRUE);
 
 		glAttachShader(_program, vertexShader);
-			
+		//FRAGMENT SOURCE
+		const GLchar *fragmentFormatted = (GLchar*)fragmentSource.data();
+		GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(fragmentShader, 1, &fragmentFormatted, nullptr);
+		glCompileShader(fragmentShader);
+		
+		glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileResult);
+		Log("[FRAGMENTCOMPILE]%d", compileResult == GL_TRUE);
+
+		glAttachShader(_program, fragmentShader);
+		
+		//LINK PROGRAM
+		
+		glLinkProgram(_program);
+
+		glGetProgramiv(_program, GL_LINK_STATUS, &compileResult);
+		Log("[PROGRAM LINK]%d", compileResult == GL_TRUE);
+		setLocations(application);
+	}
+	static void setLocations(android_app* application)
+	{
 	
+	//activate attribute arrays
+	_positionIndex = glGetAttribLocation(_program, "attrPosition");
+	Log("SO FAR");
+	Log("[POSITIONINDEX]%d",(_positionIndex >= 0));
+	glEnableVertexAttribArray(_positionIndex);
+
+	_colorIndex = glGetAttribLocation(_program, "attrColor");
+	Log("[COLORINDEX]%d",_colorIndex >= 0);
+	glEnableVertexAttribArray(_colorIndex);
+
+	_textureIndex = glGetAttribLocation(_program, "attrTexCoord");
+	Log("[TEXTUREINDEX]%d",_textureIndex >= 0);
+	glEnableVertexAttribArray(_textureIndex);
+
+
+	const GLint _samplerLocation = glGetUniformLocation(_program, "myTexture");
+	Log("[SAMPLERINDEX]%d",_samplerLocation >= 0);
+
+	const GLint _projectionLocation = glGetUniformLocation(_program, "unifProjection");
+	Log("[PROJECTIONINDEX]%d",_projectionLocation != -1);
+
+	 worldIndex = glGetUniformLocation(_program, "unifWorld");
+	Log("[POSITIONINDEX]%d",worldIndex != -1);
+
+	viewIndex = glGetUniformLocation(_program, "unifView");
+	Log("[VIEWINDEX]%d",viewIndex != -1);
+	alphaIndex = glGetUniformLocation(_program, "unifAlpha");
+	Log("[ALPHAINDEX]%d",alphaIndex != -1);
+	
+	
+	//TEXTURE
+
+
+	//_texture = glGetUniformLocation(_program, "myTexture"); 
+	//assert(_texture >= 0);
+
+	
+	
+
+	
+	
+	
+	
+	//BUFFERS
+	
+		glGenBuffers(2, buffers);
+	
+	
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+		glBufferData(GL_ARRAY_BUFFER, _vertexBufferInput.size() * sizeof(GLfloat), &_vertexBufferInput.at(0), GL_STATIC_DRAW);//sizeof(_vertexBufferInput) might return a value that is not always correct...
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		Log("[ARRAYBUFFER]");
+
+
+
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indexBufferInput.size()* sizeof(GLfloat), &_indexBufferInput.at(0), GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		Log("[INDEXBUFFER]");
+		
+		
+		
+		
+		
+	//OTHER STUFF
+	
+	int width = ANativeWindow_getWidth(application->window);
+	int height = ANativeWindow_getHeight(application->window);
+	glUseProgram(_program);
+	//lUniformMatrix4fv(_projectionLocation, 1, GL_FALSE, reinterpret_cast<const float*>(&_projection));
+	glm::mat4 projectionTransform = glm::perspective(60.0f * 0.0174532925f, static_cast<float>(width)//res X
+		/ height // res y
+		, 0.01f, 1000.0f);
+	glUniformMatrix4fv(_projectionLocation, 1, GL_FALSE, reinterpret_cast<float*>(&projectionTransform));
+
+	worldTransform = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)) * glm::rotate(40.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glUniformMatrix4fv(worldIndex, 1, GL_FALSE, reinterpret_cast<float*>(&worldTransform));
+
+	glm::mat4 viewTransform = glm::translate(glm::vec3(0.0f, 0.0f, -100.0f));
+	glUniformMatrix4fv(viewIndex, 1, GL_FALSE, reinterpret_cast<float*>(&viewTransform));
+
+
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+
+	glVertexAttribPointer(_positionIndex, 3, GL_FLOAT, GL_FALSE, 32, reinterpret_cast<GLvoid*>(0));
+
+	glVertexAttribPointer(_colorIndex, 3, GL_FLOAT, GL_FALSE, 32, reinterpret_cast<GLvoid*>(12));
+
+	glVertexAttribPointer(_textureIndex, 2, GL_FLOAT, GL_FALSE, 32, reinterpret_cast<GLvoid*>(24));
+
+	glUseProgram(0u);
+
+
+
+
+	glClearColor(0.2f, 0.4f, 0.8f, 1.0f);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_SCISSOR_TEST);
+	glEnable(GL_DEPTH_TEST);
+
 	}
 	static void destroyGraphicsContext(android_app* application)
 	{
@@ -315,12 +568,15 @@ Application::~Application()
 }
 void android_main(android_app* application)
 {
-	Application a;
+	
+	
+	Application a;	
 	ResourceManager::Initialize(application);
-	std::string stringtest;
-	ResourceManager::readFile("hello.txt", stringtest);
-	a.Log("%s",stringtest.data());
+
 	a._impl->Initialize(application);
+	
+
+	//a.Log("[VERTEXSIZE]%d",l.getINDEX()->size());
 	while (true)
 	{
 		a.Update();

@@ -5,7 +5,10 @@ LOCAL_MODULE :=native
 LOCAL_SRC_FILES := \
 android_native_app_glue.c\
 ApplicationAndroid.cpp\
-ResourceManagerAndroid.cpp
+ResourceManagerAndroid.cpp\
+ObjectLoader.cpp\
+lodepng.cpp\
+Object3D.cpp
 
 LOCAL_CFLAGS := -std=gnu++11
 LOCAL_CPPFLAGS := -std=gnu++0x -std=c++11 -DANDROID_GAME=1
